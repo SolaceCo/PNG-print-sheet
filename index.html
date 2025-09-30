@@ -2,29 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Affirmation Card Print Sheet — 2x5 Fixed</title>
 <style>
-  *{box-sizing:border-box}
-  body{font-family:Arial,Helvetica,sans-serif;padding:1rem;background:#f7f7f7;color:#222}
-  h1{text-align:center;margin-bottom:.6rem}
-  .controls{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1rem}
-  .controls label{display:flex;flex-direction:column;font-size:.88rem;text-align:center}
-  .thumbs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;justify-content:center}
-  .thumb{width:70px;height:40px;overflow:hidden;border:1px solid #ccc;border-radius:4px;background:#fff;position:relative}
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .idx{position:absolute;right:4px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;padding:2px 4px;font-size:.7rem;border-radius:3px}
-  .pages-wrapper{display:flex;flex-direction:column;gap:1rem;align-items:center}
-  .sheet{background:white;border:1px solid #bbb;box-shadow:0 2px 6px rgba(0,0,0,.06);overflow:visible}
-  .page-content{width:100%;height:100%;padding:0;display:flex;align-items:center;justify-content:center}
-  .grid{display:grid;justify-items:center;align-content:center}
-  .slot{position:relative}
-  .card-box{width:100%;height:100%;overflow:hidden}
-  .card-box img{width:100%;height:100%;object-fit:contain;display:block}
-  .cut{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed #000;pointer-events:none;box-sizing:border-box}
-  .print-area{position:absolute;left:-9999px;top:-9999px}
-  .muted{color:#666;text-align:center}
-  @media (max-width:420px){.controls{gap:.35rem}.thumb{width:60px;height:36px}}
+  * { box-sizing: border-box }
+  body { font-family: Arial, Helvetica, sans-serif; padding: 1rem; background: #f7f7f7; color: #222 }
+  h1 { text-align: center; margin-bottom: .6rem }
+  .controls { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-bottom: 1rem }
+  .controls label { display: flex; flex-direction: column; font-size: .88rem; text-align: center }
+  .thumbs { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; justify-content: center }
+  .thumb { width: 70px; height: 40px; overflow: hidden; border: 1px solid #ccc; border-radius: 4px; background: #fff; position: relative }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block }
+  .idx { position: absolute; right: 4px; bottom: 2px; background: rgba(0,0,0,.6); color: #fff; padding: 2px 4px; font-size: .7rem; border-radius: 3px }
+  .pages-wrapper { display: flex; flex-direction: column; gap: 1rem; align-items: center }
+  .sheet { background: white; border: 1px solid #bbb; box-shadow: 0 2px 6px rgba(0,0,0,.06); overflow: visible }
+  .page-content { width: 100%; height: 100%; padding: 0; display: flex; align-items: center; justify-content: center }
+  .grid { display: grid; justify-items: center; align-content: center }
+  .slot { position: relative }
+  .card-box { width: 100%; height: 100%; overflow: hidden }
+  .card-box img { width: 100%; height: 100%; object-fit: contain; display: block }
+  .cut { position: absolute; left: 0; top: 0; right: 0; bottom: 0; border: 1px dashed #000; pointer-events: none; box-sizing: border-box }
+  .print-area { position: absolute; left: -9999px; top: -9999px }
+  .muted { color: #666; text-align: center }
+  @media (max-width: 420px) { .controls { gap: .35rem } .thumb { width: 60px; height: 36px } }
 </style>
 </head>
 <body>
@@ -51,7 +51,7 @@
     </label>
 
     <label>Margin (in)
-      <input id="margin" type="number" step="0.01" value="0.1" style="width:86px;">
+      <input id="margin" type="number" step="0.01" value="0.25" style="width:86px;">
     </label>
 
     <label>Cols × Rows
@@ -72,8 +72,9 @@
   <script>
   // ---------- Config ----------
   let files = [];
-  const cardDimensions = { width: 3.5, height: 2 }; // inches (standard)
+  const cardDimensions = { width: 3.5, height: 2 }; // inches (standard business card)
   const DPI = 300; // High resolution for real-world dimensions
+  const BLEED = 0.125; // 1/8 inch bleed area for safe cutting
   let lastPages = null;
 
   // DOM
@@ -99,13 +100,13 @@
   pageSizeSelect.addEventListener('change', generatePrintSheet);
   orientationSelect.addEventListener('change', generatePrintSheet);
   marginInput.addEventListener('change', generatePrintSheet);
-  colsInput.addEventListener('change', ()=>{ if(colsInput.value<1) colsInput.value=1; generatePrintSheet(); });
-  rowsInput.addEventListener('change', ()=>{ if(rowsInput.value<1) rowsInput.value=1; generatePrintSheet(); });
+  colsInput.addEventListener('change', () => { if(colsInput.value<1) colsInput.value=1; generatePrintSheet(); });
+  rowsInput.addEventListener('change', () => { if(rowsInput.value<1) rowsInput.value=1; generatePrintSheet(); });
   cropInput.addEventListener('change', generatePrintSheet);
 
-  function handleFileSelect(e){
+  function handleFileSelect(e) {
     const newFiles = Array.from(e.target.files);
-    newFiles.forEach(f=>{
+    newFiles.forEach(f => {
       const reader = new FileReader();
       reader.onload = ev => {
         files.push({ name: f.name, src: ev.target.result });
@@ -117,9 +118,9 @@
     e.target.value = null;
   }
 
-  function renderThumbnails(){
+  function renderThumbnails() {
     thumbs.innerHTML = '';
-    files.forEach((f,i)=>{
+    files.forEach((f, i) => {
       const div = document.createElement('div');
       div.className = 'thumb';
       const img = document.createElement('img'); img.src = f.src; img.alt = f.name;
@@ -129,59 +130,57 @@
     });
   }
 
-  // ---------- Layout calculation (forced grid, tight fit) ----------
-  function calculateLayout(pageSize, orientation, margin, forcedCols, forcedRows){
-    const sizes = { letter:{w:8.5,h:11}, a4:{w:8.27,h:11.69} };
+  // ---------- Layout calculation (tight 2x5 grid) ----------
+  function calculateLayout(pageSize, orientation, margin, forcedCols, forcedRows) {
+    const sizes = { letter: { w: 8.5, h: 11 }, a4: { w: 8.27, h: 11.69 } };
     const paper = sizes[pageSize] || sizes.letter;
-    let pageW = orientation==='portrait' ? paper.w : paper.h;
-    let pageH = orientation==='portrait' ? paper.h : paper.w;
+    let pageW = orientation === 'portrait' ? paper.w : paper.h;
+    let pageH = orientation === 'portrait' ? paper.h : paper.w;
 
-    const usableW = pageW - 2*margin;
-    const usableH = pageH - 2*margin;
+    const usableW = pageW - 2 * margin;
+    const usableH = pageH - 2 * margin;
     if (usableW <= 0 || usableH <= 0) return null;
 
     const cols = Math.max(1, parseInt(forcedCols) || 2);
     const rows = Math.max(1, parseInt(forcedRows) || 5);
 
-    let finalCardW = cardDimensions.width;
-    let finalCardH = cardDimensions.height;
-    let hGap = 0.01; // Minimal gap
-    let vGap = 0.01; // Minimal gap
-    let scale = 1;
+    const finalCardW = cardDimensions.width;
+    const finalCardH = cardDimensions.height;
+    
+    // Add small gap for cutting guidance (1/16 inch = 0.0625)
+    const hGap = 0.0625;
+    const vGap = 0.0625;
 
-    // Calculate maximum possible scale to fit tightly
-    const maxWidth = (usableW - (cols - 1) * hGap) / cols;
-    const maxHeight = (usableH - (rows - 1) * vGap) / rows;
-    scale = Math.min(maxWidth / finalCardW, maxHeight / finalCardH, 1);
+    // Check if cards fit at actual size with gaps
+    const totalW = cols * finalCardW + (cols - 1) * hGap;
+    const totalH = rows * finalCardH + (rows - 1) * vGap;
 
-    finalCardW *= scale;
-    finalCardH *= scale;
-
-    // Adjust gaps if still too large, but keep minimal
-    if (cols * finalCardW > usableW) hGap = Math.max(0, (usableW - cols * finalCardW) / (cols - 1));
-    if (rows * finalCardH > usableH) vGap = Math.max(0, (usableH - rows * finalCardH) / (rows - 1));
+    if (totalW > usableW || totalH > usableH) {
+      alert(`Cards don't fit at actual size (${cardDimensions.width}"×${cardDimensions.height}") with ${cols}×${rows} grid. Reduce grid size or increase margin.`);
+      return null;
+    }
 
     const cardsPerPage = cols * rows;
     const pagesCount = Math.max(1, Math.ceil(files.length / cardsPerPage));
 
     const pages = [];
-    for (let i=0; i<pagesCount; i++){
+    for (let i = 0; i < pagesCount; i++) {
       pages.push({
         pageWidth: pageW,
         pageHeight: pageH,
         cols, rows,
-        hGap: +hGap,
-        vGap: +vGap,
-        cardW: +finalCardW,
-        cardH: +finalCardH,
-        scale: +scale
+        hGap: hGap,
+        vGap: vGap,
+        cardW: finalCardW,
+        cardH: finalCardH,
+        scale: 1
       });
     }
     return pages;
   }
 
   // ---------- Create sheet DOM ----------
-  function createSheet(page, pageIdx, margin, showCrop){
+  function createSheet(page, pageIdx, margin, showCrop) {
     const sheet = document.createElement('div');
     sheet.className = 'sheet';
     sheet.style.width = page.pageWidth + 'in';
@@ -202,7 +201,7 @@
     grid.style.alignContent = 'center';
 
     const totalSlots = page.cols * page.rows;
-    for (let i=0; i<totalSlots; i++){
+    for (let i = 0; i < totalSlots; i++) {
       const slot = document.createElement('div');
       slot.className = 'slot';
       slot.style.width = page.cardW + 'in';
@@ -215,7 +214,7 @@
       cardBox.style.position = 'relative';
 
       const globalIdx = pageIdx * totalSlots + i;
-      if (globalIdx < files.length){
+      if (globalIdx < files.length) {
         const img = document.createElement('img');
         img.src = files[globalIdx].src;
         img.alt = files[globalIdx].name || ('card-' + (globalIdx+1));
@@ -237,17 +236,17 @@
   }
 
   // ---------- Generate ----------
-  function generatePrintSheet(){
+  function generatePrintSheet() {
     const pageSize = pageSizeSelect.value;
     const orientation = orientationSelect.value;
-    const margin = Math.max(0, parseFloat(marginInput.value) || 0.1); // Default to 0.1 inches
+    const margin = Math.max(0, parseFloat(marginInput.value) || 0.25);
     const forcedCols = Math.max(1, parseInt(colsInput.value) || 2);
     const forcedRows = Math.max(1, parseInt(rowsInput.value) || 5);
     const showCrop = cropInput.checked;
 
     const pages = calculateLayout(pageSize, orientation, margin, forcedCols, forcedRows);
     lastPages = pages;
-    if (!pages){
+    if (!pages) {
       pagesWrapper.innerHTML = '<p class="muted">Cannot fit any cards on this page with current margin/settings.</p>';
       printArea.innerHTML = '';
       return;
@@ -263,24 +262,24 @@
     });
   }
 
-  // wait for images in element
-  function waitForImages(root){
+  // Wait for images in element
+  function waitForImages(root) {
     const imgs = [...root.querySelectorAll('img')];
     if (imgs.length === 0) return Promise.resolve();
-    return new Promise(resolve=>{
+    return new Promise(resolve => {
       let left = imgs.length;
-      imgs.forEach(img=>{
-        if (img.complete && img.naturalWidth !== 0) { left--; if (left===0) resolve(); }
+      imgs.forEach(img => {
+        if (img.complete && img.naturalWidth !== 0) { left--; if (left === 0) resolve(); }
         else {
-          img.addEventListener('load', ()=>{ left--; if (left===0) resolve(); }, {once:true});
-          img.addEventListener('error', ()=>{ left--; if (left===0) resolve(); }, {once:true});
+          img.addEventListener('load', () => { left--; if (left === 0) resolve(); }, { once: true });
+          img.addEventListener('error', () => { left--; if (left === 0) resolve(); }, { once: true });
         }
       });
     });
   }
 
   // ---------- Download ----------
-  async function downloadPrintSheet(){
+  async function downloadPrintSheet() {
     if (!lastPages || lastPages.length === 0) { alert('Generate a sheet first.'); return; }
     const offsheet = printArea.querySelector('.sheet');
     if (!offsheet) { alert('No sheet found. Generate first.'); return; }
@@ -288,32 +287,55 @@
     await waitForImages(offsheet);
 
     const page = lastPages[0];
-    const qualityScale = 1; // Use 1 for exact dimensions; increase if higher res needed
-    const wPx = Math.round(page.pageWidth * DPI * qualityScale);
-    const hPx = Math.round(page.pageHeight * DPI * qualityScale);
+    
+    // Calculate exact pixel dimensions at 300 DPI
+    const wPx = Math.round(page.pageWidth * DPI);
+    const hPx = Math.round(page.pageHeight * DPI);
 
-    html2canvas(offsheet, {
-      scale: qualityScale,
+    // Create a temporary container with exact dimensions
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = page.pageWidth + 'in';
+    tempContainer.style.height = page.pageHeight + 'in';
+    tempContainer.style.background = '#ffffff';
+    document.body.appendChild(tempContainer);
+    
+    const clonedSheet = offsheet.cloneNode(true);
+    clonedSheet.style.width = page.pageWidth + 'in';
+    clonedSheet.style.height = page.pageHeight + 'in';
+    tempContainer.appendChild(clonedSheet);
+
+    // Wait for cloned images
+    await waitForImages(tempContainer);
+
+    html2canvas(tempContainer, {
+      scale: DPI / 96, // Convert CSS pixels to actual DPI (96 is default CSS DPI)
       useCORS: true,
       width: wPx,
       height: hPx,
-      windowWidth: wPx,
-      windowHeight: hPx,
-      backgroundColor: '#ffffff'
-    }).then(canvas=>{
+      backgroundColor: '#ffffff',
+      logging: false
+    }).then(canvas => {
+      // Verify canvas dimensions match expected
+      console.log(`Canvas: ${canvas.width}×${canvas.height}px, Expected: ${wPx}×${hPx}px`);
+      console.log(`Physical size: ${(canvas.width/DPI).toFixed(2)}"×${(canvas.height/DPI).toFixed(2)}"`);
+      
       const a = document.createElement('a');
-      a.download = 'affirmation-cards.png';
+      a.download = 'affirmation-cards-sheet.png';
       a.href = canvas.toDataURL('image/png');
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    }).catch(err=>{
+      document.body.removeChild(tempContainer);
+    }).catch(err => {
       console.error(err);
       alert('Failed to generate PNG — check console.');
+      document.body.removeChild(tempContainer);
     });
   }
 
-  function clearAll(){
+  function clearAll() {
     files = [];
     thumbs.innerHTML = '';
     pagesWrapper.innerHTML = '';
@@ -322,8 +344,8 @@
     lastPages = null;
   }
 
-  // init
-  window.addEventListener('load', ()=>{ /* nothing */ });
+  // Init
+  window.addEventListener('load', () => { /* nothing */ });
   </script>
 </body>
 </html>
