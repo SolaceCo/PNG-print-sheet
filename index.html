@@ -21,7 +21,7 @@
   .slot{position:relative}
   .card-box{width:100%;height:100%;overflow:hidden}
   .card-box img{width:100%;height:100%;object-fit:contain;display:block}
-  .cut{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed rgba(211, 211, 211, 0.5);pointer-events:none;box-sizing:border-box}
+  .cut{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed #000;pointer-events:none;box-sizing:border-box}
   .print-area{position:absolute;left:-9999px;top:-9999px}
   .muted{color:#666;text-align:center}
   @media (max-width:420px){.controls{gap:.35rem}.thumb{width:60px;height:36px}}
@@ -73,7 +73,7 @@
   // ---------- Config ----------
   let files = [];
   const cardDimensions = { width: 3.5, height: 2 }; // inches (standard)
-  const DPI = 96;
+  const DPI = 300; // Increased for better print quality
   let lastPages = null;
 
   // DOM
@@ -140,13 +140,11 @@
     const usableH = pageH - 2*margin;
     if (usableW <= 0 || usableH <= 0) return null;
 
-    // forced grid
     const cols = Math.max(1, parseInt(forcedCols) || 2);
     const rows = Math.max(1, parseInt(forcedRows) || 5);
 
-    const idealGap = margin; // prefer gap equal to margin
+    const idealGap = margin;
 
-    // check if ideal gap works without scaling
     const widthNeededWithIdealGap = cols * cardDimensions.width + (cols > 1 ? (cols - 1) * idealGap : 0);
     const heightNeededWithIdealGap = rows * cardDimensions.height + (rows > 1 ? (rows - 1) * idealGap : 0);
 
@@ -157,24 +155,21 @@
     let scale = 1;
 
     if (widthNeededWithIdealGap <= usableW && heightNeededWithIdealGap <= usableH) {
-      // we can keep card size and set gaps = idealGap
       hGap = cols > 1 ? idealGap : 0;
       vGap = rows > 1 ? idealGap : 0;
       scale = 1;
     } else {
-      // must scale cards down so that gaps can equal idealGap (prefer this)
       const scaleW = (usableW - (cols > 1 ? (cols - 1) * idealGap : 0)) / (cols * cardDimensions.width);
       const scaleH = (usableH - (rows > 1 ? (rows - 1) * idealGap : 0)) / (rows * cardDimensions.height);
       const minScale = Math.min(scaleW, scaleH, 1);
 
       if (minScale > 0) {
-        scale = Math.min(1, minScale);
+        scale = minScale;
         finalCardW = cardDimensions.width * scale;
         finalCardH = cardDimensions.height * scale;
         hGap = cols > 1 ? idealGap : 0;
         vGap = rows > 1 ? idealGap : 0;
       } else {
-        // extreme case: can't fit even with scaling to very small; fall back to setting gaps to evenly distribute leftover (may be > idealGap)
         finalCardW = cardDimensions.width;
         finalCardH = cardDimensions.height;
         hGap = cols > 1 ? Math.max(0, (usableW - cols * finalCardW) / (cols - 1)) : 0;
@@ -183,7 +178,6 @@
       }
     }
 
-    // final clamp
     if (hGap < 0) hGap = 0;
     if (vGap < 0) vGap = 0;
 
@@ -218,7 +212,6 @@
     pageContent.style.padding = margin + 'in';
     pageContent.style.boxSizing = 'border-box';
 
-    // grid
     const grid = document.createElement('div');
     grid.className = 'grid';
     grid.style.gridTemplateColumns = `repeat(${page.cols}, ${page.cardW}in)`;
@@ -268,7 +261,6 @@
     const pageSize = pageSizeSelect.value;
     const orientation = orientationSelect.value;
     const margin = Math.max(0, parseFloat(marginInput.value) || 0);
-    // force the requested grid (defaults provided)
     const forcedCols = Math.max(1, parseInt(colsInput.value) || 2);
     const forcedRows = Math.max(1, parseInt(rowsInput.value) || 5);
     const showCrop = cropInput.checked;
@@ -316,7 +308,7 @@
     await waitForImages(offsheet);
 
     const page = lastPages[0];
-    const qualityScale = 2; // increase for higher res
+    const qualityScale = 1; // Adjusted to avoid potential rendering issues; increase if needed
     const wPx = Math.round(page.pageWidth * DPI * qualityScale);
     const hPx = Math.round(page.pageHeight * DPI * qualityScale);
 
@@ -354,4 +346,4 @@
   window.addEventListener('load', ()=>{ /* nothing */ });
   </script>
 </body>
-  </html>
+</html>
