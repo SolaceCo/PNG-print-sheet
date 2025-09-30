@@ -281,58 +281,95 @@
   // ---------- Download ----------
   async function downloadPrintSheet() {
     if (!lastPages || lastPages.length === 0) { alert('Generate a sheet first.'); return; }
-    const offsheet = printArea.querySelector('.sheet');
-    if (!offsheet) { alert('No sheet found. Generate first.'); return; }
-
-    await waitForImages(offsheet);
-
+    
     const page = lastPages[0];
+    const margin = Math.max(0, parseFloat(marginInput.value) || 0.25);
+    const showCrop = cropInput.checked;
     
     // Calculate exact pixel dimensions at 300 DPI
     const wPx = Math.round(page.pageWidth * DPI);
     const hPx = Math.round(page.pageHeight * DPI);
 
-    // Create a temporary container with exact dimensions
-    const tempContainer = document.createElement('div');
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-9999px';
-    tempContainer.style.width = page.pageWidth + 'in';
-    tempContainer.style.height = page.pageHeight + 'in';
-    tempContainer.style.background = '#ffffff';
-    document.body.appendChild(tempContainer);
+    // Create a canvas manually
+    const canvas = document.createElement('canvas');
+    canvas.width = wPx;
+    canvas.height = hPx;
+    const ctx = canvas.getContext('2d');
     
-    const clonedSheet = offsheet.cloneNode(true);
-    clonedSheet.style.width = page.pageWidth + 'in';
-    clonedSheet.style.height = page.pageHeight + 'in';
-    tempContainer.appendChild(clonedSheet);
+    // Fill white background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, wPx, hPx);
 
-    // Wait for cloned images
-    await waitForImages(tempContainer);
+    // Calculate layout in pixels
+    const marginPx = margin * DPI;
+    const cardWPx = page.cardW * DPI;
+    const cardHPx = page.cardH * DPI;
+    const hGapPx = page.hGap * DPI;
+    const vGapPx = page.vGap * DPI;
+    
+    // Calculate total grid size
+    const totalGridW = page.cols * cardWPx + (page.cols - 1) * hGapPx;
+    const totalGridH = page.rows * cardHPx + (page.rows - 1) * vGapPx;
+    
+    // Center the grid on the page
+    const startX = (wPx - totalGridW) / 2;
+    const startY = (hPx - totalGridH) / 2;
 
-    html2canvas(tempContainer, {
-      scale: DPI / 96, // Convert CSS pixels to actual DPI (96 is default CSS DPI)
-      useCORS: true,
-      width: wPx,
-      height: hPx,
-      backgroundColor: '#ffffff',
-      logging: false
-    }).then(canvas => {
-      // Verify canvas dimensions match expected
-      console.log(`Canvas: ${canvas.width}×${canvas.height}px, Expected: ${wPx}×${hPx}px`);
-      console.log(`Physical size: ${(canvas.width/DPI).toFixed(2)}"×${(canvas.height/DPI).toFixed(2)}"`);
+    // Draw each card
+    const totalSlots = page.cols * page.rows;
+    let loaded = 0;
+    const promises = [];
+
+    for (let i = 0; i < totalSlots; i++) {
+      if (i >= files.length) continue;
       
+      const col = i % page.cols;
+      const row = Math.floor(i / page.cols);
+      
+      const x = startX + col * (cardWPx + hGapPx);
+      const y = startY + row * (cardHPx + vGapPx);
+      
+      const promise = new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          ctx.drawImage(img, x, y, cardWPx, cardHPx);
+          
+          // Draw crop marks if enabled
+          if (showCrop) {
+            ctx.strokeStyle = '#000000';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, cardWPx, cardHPx);
+            ctx.setLineDash([]);
+          }
+          
+          resolve();
+        };
+        img.onerror = () => resolve();
+        img.src = files[i].src;
+      });
+      
+      promises.push(promise);
+    }
+
+    // Wait for all images to load and draw
+    await Promise.all(promises);
+
+    // Download
+    console.log(`Canvas: ${canvas.width}×${canvas.height}px`);
+    console.log(`Physical size: ${(canvas.width/DPI).toFixed(2)}"×${(canvas.height/DPI).toFixed(2)}"`);
+    
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.download = 'affirmation-cards-sheet.png';
-      a.href = canvas.toDataURL('image/png');
+      a.href = url;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      document.body.removeChild(tempContainer);
-    }).catch(err => {
-      console.error(err);
-      alert('Failed to generate PNG — check console.');
-      document.body.removeChild(tempContainer);
-    });
+      URL.revokeObjectURL(url);
+    }, 'image/png');
   }
 
   function clearAll() {
