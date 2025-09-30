@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affirmation Card Print Sheet</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      background: #f7f7f7;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .controls label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    .thumbs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      justify-content: center;
+    }
+
+    .thumb {
+      position: relative;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      overflow: hidden;
+      width: 70px;
+      height: 40px;
+      cursor: grab;
+      background: #fff;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumb .idx {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 1px 3px;
+      border-radius: 3px;
+    }
+
+    .thumb.dragging {
+      opacity: 0.5;
+    }
+
+    .pages-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .sheet {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), auto);
+      gap: var(--gap, 0.05in); /* Much smaller default gap */
+      margin: var(--margin, 0.25in);
+      background: white;
+      border: 1px solid #ccc;
+      padding: 0.25in;
+      width: var(--page-w);
+      height: var(--page-h);
+      box-sizing: border-box;
+    }
+
+    .slot {
+      position: relative;
+      width: 3.5in;
+      height: 2in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+    }
+
+    .card-box {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border: 1px solid #f0f0f0; /* Light border to see card boundaries */
+    }
+
+    .card-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .cut {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 1px dashed red;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+
+    .print-area {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+    }
+
+    .muted {
+      color: #888;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Affirmation Card Print Sheet</h1>
+
+  <div class="controls">
+    <input type="file" id="files" multiple accept="image/*">
+    <button id="clearBtn">Clear</button>
+    <button id="generateBtn">Generate</button>
+    <button id="downloadSheetBtn">Download PNG</button>
+
+    <label>Page Size
+      <select id="pageSize">
+        <option value="letter">Letter (8.5x11in)</option>
+        <option value="a4">A4 (210x297mm)</option>
+      </select>
+    </label>
+
+    <label>Orientation
+      <select id="orientation">
+        <option value="portrait">Portrait</option>
+        <option value="landscape">Landscape</option>
+      </select>
+    </label>
+
+    <label>Margin (in)
+      <input type="number" id="margin" step="0.1" value="0.25">
+    </label>
+
+    <label>Gap (in)
+      <input type="number" id="gap" step="0.01" value="0.05"> <!-- Much smaller default gap -->
+    </label>
+
+    <label>
+      <input type="checkbox" id="cropMarks" checked> Show Crop Marks
+    </label>
+  </div>
+
+  <div id="thumbs" class="thumbs"></div>
+
+  <div class="pages-wrapper"></div>
+
+  <div class="print-area"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script>
+    let files = [];
+    const cardDimensions = { width: 3.5, height: 2 }; // inches
+    const DPI = 96; // Screen DPI for pixel conversion
+
+    // DOM references
+    const fileInput = document.getElementById('files');
+    const thumbsContainer = document.getElementById('thumbs');
+    const clearBtn = document.getElementById('clearBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadSheetBtn');
+    const pageSizeSelect = document.getElementById('pageSize');
+    const orientationSelect = document.getElementById('orientation');
+    const marginInput = document.getElementById('margin');
+    const gapInput = document.getElementById('gap');
+    const pagesWrapper = document.querySelector('.pages-wrapper');
+    const printArea = document.querySelector('.print-area');
+
+    // Event listeners
+    fileInput.addEventListener('change', handleFileSelect);
+    clearBtn.addEventListener('click', clearAll);
+    generateBtn.addEventListener('click', generatePrintSheet);
+    downloadBtn.addEventListener('click', downloadPrintSheet);
+    pageSizeSelect.addEventListener('change', generatePrintSheet);
+    orientationSelect.addEventListener('change', generatePrintSheet);
+    marginInput.addEventListener('change', generatePrintSheet);
+    gapInput.addEventListener('change', generatePrintSheet);
+    thumbsContainer.addEventListener('dragstart', handleDragStart);
+    thumbsContainer.addEventListener('dragover', handleDragOver);
+    thumbsContainer.addEventListener('drop', handleDrop);
+    thumbsContainer.addEventListener('dragend', handleDragEnd);
+
+    function handleFileSelect(e) {
+      const newFiles = Array.from(e.target.files).slice(0, 10 - files.length);
+      newFiles.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          files.push({ file: f, src: ev.target.result });
+          renderThumbnails();
+          generatePrintSheet();
+        };
+        reader.readAsDataURL(f);
+      });
+      e.target.value = null;
+    }
+
+    function renderThumbnails() {
+      thumbsContainer.innerHTML = '';
+      files.forEach((f, i) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        thumb.draggable = true;
+        thumb.dataset.index = i;
+
+        const img = document.createElement('img');
+        img.src = f.src;
+        img.alt = `Card ${i + 1}`;
+        img.crossOrigin = 'Anonymous';
+
+        const idx = document.createElement('div');
+        idx.className = 'idx';
+        idx.textContent = i + 1;
+
+        thumb.append(img, idx);
+        thumbsContainer.appendChild(thumb);
+      });
+    }
+
+    let dragStartIndex = null;
+
+    function handleDragStart(e) {
+      const thumb = e.target.closest('.thumb');
+      if (!thumb) return;
+      dragStartIndex = Number(thumb.dataset.index);
+      thumb.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      const dragging = document.querySelector('.dragging');
+      const after = getDragAfterElement(thumbsContainer, e.clientY);
+      if (after == null) {
+        thumbsContainer.appendChild(dragging);
+      } else {
+        thumbsContainer.insertBefore(dragging, after);
+      }
+    }
+
+    function getDragAfterElement(container, y) {
+      const elems = [...container.querySelectorAll('.thumb:not(.dragging)')];
+      return elems.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+          return { offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const dropTarget = e.target.closest('.thumb');
+      if (!dropTarget) return;
+      const dropEndIndex = Number(dropTarget.dataset.index);
+      const [moved] = files.splice(dragStartIndex, 1);
+      files.splice(dropEndIndex, 0, moved);
+      renderThumbnails();
+      generatePrintSheet();
+    }
+
+    function handleDragEnd(e) {
+      const thumb = e.target.closest('.thumb');
+      if (thumb) thumb.classList.remove('dragging');
+      renderThumbnails();
+      generatePrintSheet();
+    }
+
+    function generatePrintSheet() {
+      const pageSize = pageSizeSelect.value;
+      const orientation = orientationSelect.value;
+      const margin = parseFloat(marginInput.value) || 0;
+      const gap = parseFloat(gapInput.value) || 0;
+      const showCrop = document.getElementById('cropMarks').checked;
+
+      const pages = calculateLayout(pageSize, orientation, margin, gap);
+      if (!pages) {
+        pagesWrapper.innerHTML = `<p class="muted">Cannot fit any cards on this page with the current settings.</p>`;
+        printArea.innerHTML = '';
+        return;
+      }
+
+      pagesWrapper.innerHTML = '';
+      printArea.innerHTML = '';
+
+      pages.forEach((page, pageIdx) => {
+        const sheet = createSheet(page, pageIdx, margin, gap, showCrop);
+        pagesWrapper.appendChild(sheet);
+        printArea.appendChild(sheet.cloneNode(true));
+      });
+
+      const root = document.documentElement;
+      root.style.setProperty('--page-w', `${pages[0].pageWidth}in`);
+      root.style.setProperty('--page-h', `${pages[0].pageHeight}in`);
+      root.style.setProperty('--cols', pages[0].cols);
+      root.style.setProperty('--gap', `${gap}in`);
+      root.style.setProperty('--margin', `${margin}in`);
+    }
+
+    function createSheet(page, pageIdx, margin, gap, showCrop) {
+      const sheet = document.createElement('div');
+      sheet.className = 'sheet';
+      sheet.dataset.pageIdx = pageIdx;
+
+      const totalSlots = page.cols * page.rows;
+      for (let i = 0; i < totalSlots; i++) {
+        const cardBox = document.createElement('div');
+        cardBox.className = 'card-box';
+
+        const globalIdx = pageIdx * totalSlots + i;
+        if (globalIdx < files.length) {
+          const img = document.createElement('img');
+          img.src = files[globalIdx].src;
+          img.crossOrigin = 'Anonymous';
+          cardBox.appendChild(img);
+        }
+
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        slot.appendChild(cardBox);
+
+        if (showCrop) {
+          const cut = document.createElement('div');
+          cut.className = 'cut';
+          slot.appendChild(cut);
+        }
+
+        sheet.appendChild(slot);
+      }
+      return sheet;
+    }
+
+    function calculateLayout(pageSize, orientation, margin, gap) {
+      const sizes = {
+        letter: { width: 8.5, height: 11 },
+        a4: { width: 8.27, height: 11.69 }
+      };
+      const paper = sizes[pageSize];
+      let pageW, pageH;
+      if (orientation === 'portrait') {
+        pageW = paper.width;
+        pageH = paper.height;
+      } else {
+        pageW = paper.height;
+        pageH = paper.width;
+      }
+
+      const usableW = pageW - 2 * margin;
+      const usableH = pageH - 2 * margin;
+
+      // Cards with small gap
+      const cols = Math.floor((usableW + gap) / (cardDimensions.width + gap));
+      const rows = Math.floor((usableH + gap) / (cardDimensions.height + gap));
+
+      if (cols <= 0 || rows <= 0) return null;
+
+      const cardsPerPage = cols * rows;
+      const numPages = Math.ceil(files.length / cardsPerPage);
+
+      const pages = [];
+      for (let i = 0; i < numPages; i++) {
+        pages.push({ pageWidth: pageW, pageHeight: pageH, cols, rows });
+      }
+      return pages;
+    }
+
+    function downloadPrintSheet() {
+      const sheets = document.querySelectorAll('.print-area .sheet');
+      if (!sheets.length) {
+        alert('No sheet to download. Please generate a sheet first.');
+        return;
+      }
+
+      // Process first sheet only for simplicity
+      const sheet = sheets[0];
+      
+      // Simple approach - just capture without waiting for images
+      captureAndDownload(sheet);
+    }
+
+    function captureAndDownload(sheet) {
+      // Use high DPI for better quality
+      const scale = 3;
+      const pageWidthIn = 8.5;
+      const pageHeightIn = 11;
+      const pixelWidth = pageWidthIn * DPI * scale;
+      const pixelHeight = pageHeightIn * DPI * scale;
+
+      html2canvas(sheet, {
+        scale: scale,
+        useCORS: true,
+        width: pixelWidth,
+        height: pixelHeight,
+        windowWidth: pixelWidth,
+        windowHeight: pixelHeight,
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        // Create download link
+        const link = document.createElement('a');
+        link.download = 'affirmation-cards.png';
+        link.href = canvas.toDataURL('image/png');
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }).catch(err => {
+        console.error('Error generating image:', err);
+        alert('Failed to generate PNG. Please try again.');
+      });
+    }
+
+    function clearAll() {
+      files = [];
+      thumbsContainer.innerHTML = '';
+      fileInput.value = null;
+      pagesWrapper.innerHTML = '';
+      printArea.innerHTML = '';
+    }
+
+    // Initialize with a small gap
+    window.addEventListener('load', function() {
+      gapInput.value = "0.05"; // Set small gap by default
+    });
+  </script>
+</body>
+  </html>
