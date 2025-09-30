@@ -1,156 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Affirmation Card Print Sheet</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 1rem;
-      background: #f7f7f7;
-      color: #333;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-
-    .controls label {
-      display: flex;
-      flex-direction: column;
-      font-size: 0.85rem;
-      text-align: center;
-    }
-
-    .thumbs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      justify-content: center;
-    }
-
-    .thumb {
-      position: relative;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      overflow: hidden;
-      width: 70px;
-      height: 40px;
-      cursor: grab;
-      background: #fff;
-    }
-
-    .thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .thumb .idx {
-      position: absolute;
-      bottom: 2px;
-      right: 4px;
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      font-size: 0.7rem;
-      padding: 1px 3px;
-      border-radius: 3px;
-    }
-
-    .thumb.dragging {
-      opacity: 0.5;
-    }
-
-    .pages-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    .sheet {
-      display: grid;
-      grid-template-columns: repeat(var(--cols), auto);
-      gap: var(--gap, 0.05in); /* Much smaller default gap */
-      margin: var(--margin, 0.25in);
-      background: white;
-      border: 1px solid #ccc;
-      padding: 0.25in;
-      width: var(--page-w);
-      height: var(--page-h);
-      box-sizing: border-box;
-    }
-
-    .slot {
-      position: relative;
-      width: 3.5in;
-      height: 2in;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
-    }
-
-    .card-box {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      border: 1px solid #f0f0f0; /* Light border to see card boundaries */
-    }
-
-    .card-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .cut {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      border: 1px dashed red;
-      pointer-events: none;
-      box-sizing: border-box;
-    }
-
-    .print-area {
-      position: absolute;
-      left: -9999px;
-      top: -9999px;
-    }
-
-    .muted {
-      color: #888;
-      text-align: center;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Affirmation Card Print Sheet — 2x5 Fixed</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,Helvetica,sans-serif;padding:1rem;background:#f7f7f7;color:#222}
+  h1{text-align:center;margin-bottom:.6rem}
+  .controls{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-bottom:1rem}
+  .controls label{display:flex;flex-direction:column;font-size:.88rem;text-align:center}
+  .thumbs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;justify-content:center}
+  .thumb{width:70px;height:40px;overflow:hidden;border:1px solid #ccc;border-radius:4px;background:#fff;position:relative}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .idx{position:absolute;right:4px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;padding:2px 4px;font-size:.7rem;border-radius:3px}
+  .pages-wrapper{display:flex;flex-direction:column;gap:1rem;align-items:center}
+  .sheet{background:white;border:1px solid #bbb;box-shadow:0 2px 6px rgba(0,0,0,.06);overflow:hidden}
+  .page-content{width:100%;height:100%;padding:0;display:flex;align-items:center;justify-content:center}
+  .grid{display:grid;justify-items:center;align-content:center}
+  .slot{position:relative}
+  .card-box{width:100%;height:100%;overflow:hidden}
+  .card-box img{width:100%;height:100%;object-fit:contain;display:block}
+  .cut{position:absolute;left:0;top:0;right:0;bottom:0;border:1px dashed rgba(211, 211, 211, 0.5);pointer-events:none;box-sizing:border-box}
+  .print-area{position:absolute;left:-9999px;top:-9999px}
+  .muted{color:#666;text-align:center}
+  @media (max-width:420px){.controls{gap:.35rem}.thumb{width:60px;height:36px}}
+</style>
 </head>
 <body>
-  <h1>Affirmation Card Print Sheet</h1>
+  <h1>Affirmation Card Print Sheet — 2 × 5</h1>
 
   <div class="controls">
-    <input type="file" id="files" multiple accept="image/*">
+    <input id="files" type="file" accept="image/*" multiple>
     <button id="clearBtn">Clear</button>
     <button id="generateBtn">Generate</button>
     <button id="downloadSheetBtn">Download PNG</button>
 
     <label>Page Size
       <select id="pageSize">
-        <option value="letter">Letter (8.5x11in)</option>
-        <option value="a4">A4 (210x297mm)</option>
+        <option value="letter">Letter (8.5×11 in)</option>
+        <option value="a4">A4 (210×297 mm)</option>
       </select>
     </label>
 
@@ -162,302 +51,307 @@
     </label>
 
     <label>Margin (in)
-      <input type="number" id="margin" step="0.1" value="0.25">
+      <input id="margin" type="number" step="0.01" value="0.25" style="width:86px;">
     </label>
 
-    <label>Gap (in)
-      <input type="number" id="gap" step="0.01" value="0.05"> <!-- Much smaller default gap -->
+    <label>Cols × Rows
+      <input id="cols" type="number" value="2" min="1" style="width:48px;"> ×
+      <input id="rows" type="number" value="5" min="1" style="width:48px;">
     </label>
 
-    <label>
-      <input type="checkbox" id="cropMarks" checked> Show Crop Marks
+    <label>Show Crop Marks
+      <input id="cropMarks" type="checkbox" checked>
     </label>
   </div>
 
   <div id="thumbs" class="thumbs"></div>
-
   <div class="pages-wrapper"></div>
-
   <div class="print-area"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
   <script>
-    let files = [];
-    const cardDimensions = { width: 3.5, height: 2 }; // inches
-    const DPI = 96; // Screen DPI for pixel conversion
+  // ---------- Config ----------
+  let files = [];
+  const cardDimensions = { width: 3.5, height: 2 }; // inches (standard)
+  const DPI = 96;
+  let lastPages = null;
 
-    // DOM references
-    const fileInput = document.getElementById('files');
-    const thumbsContainer = document.getElementById('thumbs');
-    const clearBtn = document.getElementById('clearBtn');
-    const generateBtn = document.getElementById('generateBtn');
-    const downloadBtn = document.getElementById('downloadSheetBtn');
-    const pageSizeSelect = document.getElementById('pageSize');
-    const orientationSelect = document.getElementById('orientation');
-    const marginInput = document.getElementById('margin');
-    const gapInput = document.getElementById('gap');
-    const pagesWrapper = document.querySelector('.pages-wrapper');
-    const printArea = document.querySelector('.print-area');
+  // DOM
+  const fileInput = document.getElementById('files');
+  const thumbs = document.getElementById('thumbs');
+  const clearBtn = document.getElementById('clearBtn');
+  const generateBtn = document.getElementById('generateBtn');
+  const downloadBtn = document.getElementById('downloadSheetBtn');
+  const pageSizeSelect = document.getElementById('pageSize');
+  const orientationSelect = document.getElementById('orientation');
+  const marginInput = document.getElementById('margin');
+  const colsInput = document.getElementById('cols');
+  const rowsInput = document.getElementById('rows');
+  const cropInput = document.getElementById('cropMarks');
+  const pagesWrapper = document.querySelector('.pages-wrapper');
+  const printArea = document.querySelector('.print-area');
 
-    // Event listeners
-    fileInput.addEventListener('change', handleFileSelect);
-    clearBtn.addEventListener('click', clearAll);
-    generateBtn.addEventListener('click', generatePrintSheet);
-    downloadBtn.addEventListener('click', downloadPrintSheet);
-    pageSizeSelect.addEventListener('change', generatePrintSheet);
-    orientationSelect.addEventListener('change', generatePrintSheet);
-    marginInput.addEventListener('change', generatePrintSheet);
-    gapInput.addEventListener('change', generatePrintSheet);
-    thumbsContainer.addEventListener('dragstart', handleDragStart);
-    thumbsContainer.addEventListener('dragover', handleDragOver);
-    thumbsContainer.addEventListener('drop', handleDrop);
-    thumbsContainer.addEventListener('dragend', handleDragEnd);
+  // Events
+  fileInput.addEventListener('change', handleFileSelect);
+  clearBtn.addEventListener('click', clearAll);
+  generateBtn.addEventListener('click', generatePrintSheet);
+  downloadBtn.addEventListener('click', downloadPrintSheet);
+  pageSizeSelect.addEventListener('change', generatePrintSheet);
+  orientationSelect.addEventListener('change', generatePrintSheet);
+  marginInput.addEventListener('change', generatePrintSheet);
+  colsInput.addEventListener('change', ()=>{ if(colsInput.value<1) colsInput.value=1; generatePrintSheet(); });
+  rowsInput.addEventListener('change', ()=>{ if(rowsInput.value<1) rowsInput.value=1; generatePrintSheet(); });
+  cropInput.addEventListener('change', generatePrintSheet);
 
-    function handleFileSelect(e) {
-      const newFiles = Array.from(e.target.files).slice(0, 10 - files.length);
-      newFiles.forEach(f => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-          files.push({ file: f, src: ev.target.result });
-          renderThumbnails();
-          generatePrintSheet();
-        };
-        reader.readAsDataURL(f);
-      });
-      e.target.value = null;
-    }
-
-    function renderThumbnails() {
-      thumbsContainer.innerHTML = '';
-      files.forEach((f, i) => {
-        const thumb = document.createElement('div');
-        thumb.className = 'thumb';
-        thumb.draggable = true;
-        thumb.dataset.index = i;
-
-        const img = document.createElement('img');
-        img.src = f.src;
-        img.alt = `Card ${i + 1}`;
-        img.crossOrigin = 'Anonymous';
-
-        const idx = document.createElement('div');
-        idx.className = 'idx';
-        idx.textContent = i + 1;
-
-        thumb.append(img, idx);
-        thumbsContainer.appendChild(thumb);
-      });
-    }
-
-    let dragStartIndex = null;
-
-    function handleDragStart(e) {
-      const thumb = e.target.closest('.thumb');
-      if (!thumb) return;
-      dragStartIndex = Number(thumb.dataset.index);
-      thumb.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    }
-
-    function handleDragOver(e) {
-      e.preventDefault();
-      const dragging = document.querySelector('.dragging');
-      const after = getDragAfterElement(thumbsContainer, e.clientY);
-      if (after == null) {
-        thumbsContainer.appendChild(dragging);
-      } else {
-        thumbsContainer.insertBefore(dragging, after);
-      }
-    }
-
-    function getDragAfterElement(container, y) {
-      const elems = [...container.querySelectorAll('.thumb:not(.dragging)')];
-      return elems.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-          return { offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    function handleDrop(e) {
-      e.preventDefault();
-      const dropTarget = e.target.closest('.thumb');
-      if (!dropTarget) return;
-      const dropEndIndex = Number(dropTarget.dataset.index);
-      const [moved] = files.splice(dragStartIndex, 1);
-      files.splice(dropEndIndex, 0, moved);
-      renderThumbnails();
-      generatePrintSheet();
-    }
-
-    function handleDragEnd(e) {
-      const thumb = e.target.closest('.thumb');
-      if (thumb) thumb.classList.remove('dragging');
-      renderThumbnails();
-      generatePrintSheet();
-    }
-
-    function generatePrintSheet() {
-      const pageSize = pageSizeSelect.value;
-      const orientation = orientationSelect.value;
-      const margin = parseFloat(marginInput.value) || 0;
-      const gap = parseFloat(gapInput.value) || 0;
-      const showCrop = document.getElementById('cropMarks').checked;
-
-      const pages = calculateLayout(pageSize, orientation, margin, gap);
-      if (!pages) {
-        pagesWrapper.innerHTML = `<p class="muted">Cannot fit any cards on this page with the current settings.</p>`;
-        printArea.innerHTML = '';
-        return;
-      }
-
-      pagesWrapper.innerHTML = '';
-      printArea.innerHTML = '';
-
-      pages.forEach((page, pageIdx) => {
-        const sheet = createSheet(page, pageIdx, margin, gap, showCrop);
-        pagesWrapper.appendChild(sheet);
-        printArea.appendChild(sheet.cloneNode(true));
-      });
-
-      const root = document.documentElement;
-      root.style.setProperty('--page-w', `${pages[0].pageWidth}in`);
-      root.style.setProperty('--page-h', `${pages[0].pageHeight}in`);
-      root.style.setProperty('--cols', pages[0].cols);
-      root.style.setProperty('--gap', `${gap}in`);
-      root.style.setProperty('--margin', `${margin}in`);
-    }
-
-    function createSheet(page, pageIdx, margin, gap, showCrop) {
-      const sheet = document.createElement('div');
-      sheet.className = 'sheet';
-      sheet.dataset.pageIdx = pageIdx;
-
-      const totalSlots = page.cols * page.rows;
-      for (let i = 0; i < totalSlots; i++) {
-        const cardBox = document.createElement('div');
-        cardBox.className = 'card-box';
-
-        const globalIdx = pageIdx * totalSlots + i;
-        if (globalIdx < files.length) {
-          const img = document.createElement('img');
-          img.src = files[globalIdx].src;
-          img.crossOrigin = 'Anonymous';
-          cardBox.appendChild(img);
-        }
-
-        const slot = document.createElement('div');
-        slot.className = 'slot';
-        slot.appendChild(cardBox);
-
-        if (showCrop) {
-          const cut = document.createElement('div');
-          cut.className = 'cut';
-          slot.appendChild(cut);
-        }
-
-        sheet.appendChild(slot);
-      }
-      return sheet;
-    }
-
-    function calculateLayout(pageSize, orientation, margin, gap) {
-      const sizes = {
-        letter: { width: 8.5, height: 11 },
-        a4: { width: 8.27, height: 11.69 }
+  function handleFileSelect(e){
+    const newFiles = Array.from(e.target.files);
+    newFiles.forEach(f=>{
+      const reader = new FileReader();
+      reader.onload = ev => {
+        files.push({ name: f.name, src: ev.target.result });
+        renderThumbnails();
+        generatePrintSheet();
       };
-      const paper = sizes[pageSize];
-      let pageW, pageH;
-      if (orientation === 'portrait') {
-        pageW = paper.width;
-        pageH = paper.height;
+      reader.readAsDataURL(f);
+    });
+    e.target.value = null;
+  }
+
+  function renderThumbnails(){
+    thumbs.innerHTML = '';
+    files.forEach((f,i)=>{
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      const img = document.createElement('img'); img.src = f.src; img.alt = f.name;
+      const idx = document.createElement('div'); idx.className='idx'; idx.textContent = i+1;
+      div.appendChild(img); div.appendChild(idx);
+      thumbs.appendChild(div);
+    });
+  }
+
+  // ---------- Layout calculation (forced grid, scaling if needed) ----------
+  function calculateLayout(pageSize, orientation, margin, forcedCols, forcedRows){
+    const sizes = { letter:{w:8.5,h:11}, a4:{w:8.27,h:11.69} };
+    const paper = sizes[pageSize] || sizes.letter;
+    let pageW = orientation==='portrait' ? paper.w : paper.h;
+    let pageH = orientation==='portrait' ? paper.h : paper.w;
+
+    const usableW = pageW - 2*margin;
+    const usableH = pageH - 2*margin;
+    if (usableW <= 0 || usableH <= 0) return null;
+
+    // forced grid
+    const cols = Math.max(1, parseInt(forcedCols) || 2);
+    const rows = Math.max(1, parseInt(forcedRows) || 5);
+
+    const idealGap = margin; // prefer gap equal to margin
+
+    // check if ideal gap works without scaling
+    const widthNeededWithIdealGap = cols * cardDimensions.width + (cols > 1 ? (cols - 1) * idealGap : 0);
+    const heightNeededWithIdealGap = rows * cardDimensions.height + (rows > 1 ? (rows - 1) * idealGap : 0);
+
+    let finalCardW = cardDimensions.width;
+    let finalCardH = cardDimensions.height;
+    let hGap = 0;
+    let vGap = 0;
+    let scale = 1;
+
+    if (widthNeededWithIdealGap <= usableW && heightNeededWithIdealGap <= usableH) {
+      // we can keep card size and set gaps = idealGap
+      hGap = cols > 1 ? idealGap : 0;
+      vGap = rows > 1 ? idealGap : 0;
+      scale = 1;
+    } else {
+      // must scale cards down so that gaps can equal idealGap (prefer this)
+      const scaleW = (usableW - (cols > 1 ? (cols - 1) * idealGap : 0)) / (cols * cardDimensions.width);
+      const scaleH = (usableH - (rows > 1 ? (rows - 1) * idealGap : 0)) / (rows * cardDimensions.height);
+      const minScale = Math.min(scaleW, scaleH, 1);
+
+      if (minScale > 0) {
+        scale = Math.min(1, minScale);
+        finalCardW = cardDimensions.width * scale;
+        finalCardH = cardDimensions.height * scale;
+        hGap = cols > 1 ? idealGap : 0;
+        vGap = rows > 1 ? idealGap : 0;
       } else {
-        pageW = paper.height;
-        pageH = paper.width;
+        // extreme case: can't fit even with scaling to very small; fall back to setting gaps to evenly distribute leftover (may be > idealGap)
+        finalCardW = cardDimensions.width;
+        finalCardH = cardDimensions.height;
+        hGap = cols > 1 ? Math.max(0, (usableW - cols * finalCardW) / (cols - 1)) : 0;
+        vGap = rows > 1 ? Math.max(0, (usableH - rows * finalCardH) / (rows - 1)) : 0;
+        scale = Math.min(1, Math.min((usableW - (cols-1)*hGap)/(cols*finalCardW), (usableH - (rows-1)*vGap)/(rows*finalCardH)));
       }
-
-      const usableW = pageW - 2 * margin;
-      const usableH = pageH - 2 * margin;
-
-      // Cards with small gap
-      const cols = Math.floor((usableW + gap) / (cardDimensions.width + gap));
-      const rows = Math.floor((usableH + gap) / (cardDimensions.height + gap));
-
-      if (cols <= 0 || rows <= 0) return null;
-
-      const cardsPerPage = cols * rows;
-      const numPages = Math.ceil(files.length / cardsPerPage);
-
-      const pages = [];
-      for (let i = 0; i < numPages; i++) {
-        pages.push({ pageWidth: pageW, pageHeight: pageH, cols, rows });
-      }
-      return pages;
     }
 
-    function downloadPrintSheet() {
-      const sheets = document.querySelectorAll('.print-area .sheet');
-      if (!sheets.length) {
-        alert('No sheet to download. Please generate a sheet first.');
-        return;
-      }
+    // final clamp
+    if (hGap < 0) hGap = 0;
+    if (vGap < 0) vGap = 0;
 
-      // Process first sheet only for simplicity
-      const sheet = sheets[0];
-      
-      // Simple approach - just capture without waiting for images
-      captureAndDownload(sheet);
-    }
+    const cardsPerPage = cols * rows;
+    const pagesCount = Math.max(1, Math.ceil(files.length / cardsPerPage));
 
-    function captureAndDownload(sheet) {
-      // Use high DPI for better quality
-      const scale = 3;
-      const pageWidthIn = 8.5;
-      const pageHeightIn = 11;
-      const pixelWidth = pageWidthIn * DPI * scale;
-      const pixelHeight = pageHeightIn * DPI * scale;
-
-      html2canvas(sheet, {
-        scale: scale,
-        useCORS: true,
-        width: pixelWidth,
-        height: pixelHeight,
-        windowWidth: pixelWidth,
-        windowHeight: pixelHeight,
-        backgroundColor: '#ffffff'
-      }).then(canvas => {
-        // Create download link
-        const link = document.createElement('a');
-        link.download = 'affirmation-cards.png';
-        link.href = canvas.toDataURL('image/png');
-        
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }).catch(err => {
-        console.error('Error generating image:', err);
-        alert('Failed to generate PNG. Please try again.');
+    const pages = [];
+    for (let i=0;i<pagesCount;i++){
+      pages.push({
+        pageWidth: pageW,
+        pageHeight: pageH,
+        cols, rows,
+        hGap: +hGap,
+        vGap: +vGap,
+        cardW: +finalCardW,
+        cardH: +finalCardH,
+        scale: +scale
       });
     }
+    return pages;
+  }
 
-    function clearAll() {
-      files = [];
-      thumbsContainer.innerHTML = '';
-      fileInput.value = null;
-      pagesWrapper.innerHTML = '';
-      printArea.innerHTML = '';
+  // ---------- Create sheet DOM ----------
+  function createSheet(page, pageIdx, margin, showCrop){
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+    sheet.style.width = page.pageWidth + 'in';
+    sheet.style.height = page.pageHeight + 'in';
+
+    const pageContent = document.createElement('div');
+    pageContent.className = 'page-content';
+    pageContent.style.padding = margin + 'in';
+    pageContent.style.boxSizing = 'border-box';
+
+    // grid
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    grid.style.gridTemplateColumns = `repeat(${page.cols}, ${page.cardW}in)`;
+    grid.style.gridAutoRows = `${page.cardH}in`;
+    grid.style.columnGap = page.hGap + 'in';
+    grid.style.rowGap = page.vGap + 'in';
+    grid.style.justifyContent = 'center';
+    grid.style.alignContent = 'center';
+
+    const totalSlots = page.cols * page.rows;
+    for (let i=0;i<totalSlots;i++){
+      const slot = document.createElement('div');
+      slot.className = 'slot';
+      slot.style.width = page.cardW + 'in';
+      slot.style.height = page.cardH + 'in';
+
+      const cardBox = document.createElement('div');
+      cardBox.className = 'card-box';
+      cardBox.style.width = '100%';
+      cardBox.style.height = '100%';
+      cardBox.style.position = 'relative';
+
+      const globalIdx = pageIdx * totalSlots + i;
+      if (globalIdx < files.length){
+        const img = document.createElement('img');
+        img.src = files[globalIdx].src;
+        img.alt = files[globalIdx].name || ('card-' + (globalIdx+1));
+        img.crossOrigin = 'Anonymous';
+        cardBox.appendChild(img);
+      }
+
+      slot.appendChild(cardBox);
+      if (showCrop) {
+        const cut = document.createElement('div'); cut.className='cut';
+        slot.appendChild(cut);
+      }
+      grid.appendChild(slot);
     }
 
-    // Initialize with a small gap
-    window.addEventListener('load', function() {
-      gapInput.value = "0.05"; // Set small gap by default
+    pageContent.appendChild(grid);
+    sheet.appendChild(pageContent);
+    return sheet;
+  }
+
+  // ---------- Generate ----------
+  function generatePrintSheet(){
+    const pageSize = pageSizeSelect.value;
+    const orientation = orientationSelect.value;
+    const margin = Math.max(0, parseFloat(marginInput.value) || 0);
+    // force the requested grid (defaults provided)
+    const forcedCols = Math.max(1, parseInt(colsInput.value) || 2);
+    const forcedRows = Math.max(1, parseInt(rowsInput.value) || 5);
+    const showCrop = cropInput.checked;
+
+    const pages = calculateLayout(pageSize, orientation, margin, forcedCols, forcedRows);
+    lastPages = pages;
+    if (!pages){
+      pagesWrapper.innerHTML = '<p class="muted">Cannot fit any cards on this page with current margin/settings.</p>';
+      printArea.innerHTML = '';
+      return;
+    }
+
+    pagesWrapper.innerHTML = '';
+    printArea.innerHTML = '';
+
+    pages.forEach((page, idx) => {
+      const sheet = createSheet(page, idx, margin, showCrop);
+      pagesWrapper.appendChild(sheet);
+      printArea.appendChild(sheet.cloneNode(true));
     });
+  }
+
+  // wait for images in element
+  function waitForImages(root){
+    const imgs = [...root.querySelectorAll('img')];
+    if (imgs.length === 0) return Promise.resolve();
+    return new Promise(resolve=>{
+      let left = imgs.length;
+      imgs.forEach(img=>{
+        if (img.complete && img.naturalWidth !== 0) { left--; if (left===0) resolve(); }
+        else {
+          img.addEventListener('load', ()=>{ left--; if (left===0) resolve(); }, {once:true});
+          img.addEventListener('error', ()=>{ left--; if (left===0) resolve(); }, {once:true});
+        }
+      });
+    });
+  }
+
+  // ---------- Download ----------
+  async function downloadPrintSheet(){
+    if (!lastPages || lastPages.length === 0) { alert('Generate a sheet first.'); return; }
+    const offsheet = printArea.querySelector('.sheet');
+    if (!offsheet) { alert('No sheet found. Generate first.'); return; }
+
+    await waitForImages(offsheet);
+
+    const page = lastPages[0];
+    const qualityScale = 2; // increase for higher res
+    const wPx = Math.round(page.pageWidth * DPI * qualityScale);
+    const hPx = Math.round(page.pageHeight * DPI * qualityScale);
+
+    html2canvas(offsheet, {
+      scale: qualityScale,
+      useCORS: true,
+      width: wPx,
+      height: hPx,
+      windowWidth: wPx,
+      windowHeight: hPx,
+      backgroundColor: '#ffffff'
+    }).then(canvas=>{
+      const a = document.createElement('a');
+      a.download = 'affirmation-cards.png';
+      a.href = canvas.toDataURL('image/png');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }).catch(err=>{
+      console.error(err);
+      alert('Failed to generate PNG — check console.');
+    });
+  }
+
+  function clearAll(){
+    files = [];
+    thumbs.innerHTML = '';
+    pagesWrapper.innerHTML = '';
+    printArea.innerHTML = '';
+    fileInput.value = null;
+    lastPages = null;
+  }
+
+  // init
+  window.addEventListener('load', ()=>{ /* nothing */ });
   </script>
 </body>
   </html>
